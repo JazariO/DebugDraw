@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0b4431cd8d164842a7f7d56e989e6cd, type: 3}
+  m_Name: DebugDrawSettings
+  m_EditorClassIdentifier: 
+  enableDebugDraw: 0
+  buildTargetPreferences:
+  - buildTargetGroup: 1
+    includeDebugDraw: 1
+  - buildTargetGroup: 2
+    includeDebugDraw: 0
+  - buildTargetGroup: 4
+    includeDebugDraw: 0
+  - buildTargetGroup: 5
+    includeDebugDraw: 0
+  - buildTargetGroup: 6
+    includeDebugDraw: 0
+  - buildTargetGroup: 7
+    includeDebugDraw: 0
+  - buildTargetGroup: 13
+    includeDebugDraw: 0
+  - buildTargetGroup: 14
+    includeDebugDraw: 0
+  - buildTargetGroup: 15
+    includeDebugDraw: 0
+  - buildTargetGroup: 16
+    includeDebugDraw: 0
+  - buildTargetGroup: 17
+    includeDebugDraw: 0
+  - buildTargetGroup: 18
+    includeDebugDraw: 0
+  - buildTargetGroup: 19
+    includeDebugDraw: 0
+  - buildTargetGroup: 20
+    includeDebugDraw: 0
+  - buildTargetGroup: 21
+    includeDebugDraw: 0
+  - buildTargetGroup: 22
+    includeDebugDraw: 0
+  - buildTargetGroup: 23
+    includeDebugDraw: 0
+  - buildTargetGroup: 24
+    includeDebugDraw: 0
+  - buildTargetGroup: 25
+    includeDebugDraw: 0
+  - buildTargetGroup: 26
+    includeDebugDraw: 0
+  - buildTargetGroup: 27
+    includeDebugDraw: 0
+  - buildTargetGroup: 28
+    includeDebugDraw: 0
+  - buildTargetGroup: 29
+    includeDebugDraw: 0
+  - buildTargetGroup: 30
+    includeDebugDraw: 0
+  - buildTargetGroup: 31
+    includeDebugDraw: 0
+  - buildTargetGroup: 32
+    includeDebugDraw: 0
+  - buildTargetGroup: 33
+    includeDebugDraw: 0
+  - buildTargetGroup: 34
+    includeDebugDraw: 0
+  - buildTargetGroup: 35
+    includeDebugDraw: 0
+  - buildTargetGroup: 36
+    includeDebugDraw: 0
+  - buildTargetGroup: 37
+    includeDebugDraw: 0

@@ -1,0 +1,18 @@
+{
+    "name": "DebugDrawer.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4905f5509a1dd0a44aa97684b769caca"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

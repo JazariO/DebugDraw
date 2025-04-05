@@ -18,6 +18,9 @@ namespace DebugDrawer
                 case DebugShape.Line:
                     mesh = CreateLineMesh(length);
                     break;
+                case DebugShape.Quad:
+                    mesh = CreateQuadMesh();
+                    break;
                 case DebugShape.Cube:
                     mesh = CreateCubeMesh();
                     break;
@@ -57,6 +60,34 @@ namespace DebugDrawer
 
             mesh.vertices = vertices;
             mesh.SetIndices(indices, MeshTopology.Lines, 0);
+            return mesh;
+        }
+
+        private static Mesh CreateQuadMesh()
+        {
+            Mesh mesh = new Mesh();
+
+            // Define vertices and indices for a quad
+            Vector3[] vertices =
+            {
+                new Vector2(-1, 1),
+                new Vector2( 1, 1),
+                new Vector2(-1,-1),
+                new Vector2( 1,-1)
+            };
+
+            int[] indices = new int[]
+            {
+                0,1,
+                1,2,
+                2,0,
+                1,3,
+                3,2
+            };
+
+            mesh.SetVertices(vertices);
+            mesh.SetIndices(indices, MeshTopology.Lines, 0);
+            mesh.RecalculateBounds();
             return mesh;
         }
 
@@ -243,6 +274,7 @@ namespace DebugDrawer
     internal enum DebugShape
     {
         Line,
+        Quad,
         Cube,
         Sphere,
         WireSphere,

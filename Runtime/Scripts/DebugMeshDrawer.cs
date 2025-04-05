@@ -15,6 +15,7 @@ internal class DebugMeshDrawer
 
     // Collections for different shapes
     private readonly DebugMeshCollection _lineCollection;
+    private readonly DebugMeshCollection _wireQuadCollection;
     private readonly DebugMeshCollection _boxCollection;
     private readonly DebugMeshCollection _sphereCollection;
     private readonly DebugMeshCollection _wireSphereCollection;
@@ -32,6 +33,7 @@ internal class DebugMeshDrawer
 
         // Create meshes
         Mesh lineMesh = DebugMeshes.Construct(DebugShape.Line);
+        Mesh wireQuadMesh = DebugMeshes.Construct(DebugShape.Quad);
         Mesh boxMesh = DebugMeshes.Construct(DebugShape.Cube);
         Mesh sphereMesh = DebugMeshes.Construct(DebugShape.Sphere);
         Mesh wireSphereMesh = DebugMeshes.Construct(DebugShape.WireSphere);
@@ -40,6 +42,7 @@ internal class DebugMeshDrawer
 
         // Create collections
         _lineCollection = new DebugMeshCollection(lineMesh, wireframeMaterial);
+        _wireQuadCollection = new DebugMeshCollection(wireQuadMesh, wireframeMaterial);
         _boxCollection = new DebugMeshCollection(boxMesh, wireframeMaterial);
         _sphereCollection = new DebugMeshCollection(sphereMesh, wireframeMaterial);
         _wireSphereCollection = new DebugMeshCollection(wireSphereMesh, wireframeMaterial);
@@ -47,6 +50,7 @@ internal class DebugMeshDrawer
         // Add other collections as needed
 
         _collections.Add(_lineCollection);
+        _collections.Add(_wireQuadCollection);
         _collections.Add(_boxCollection);
         _collections.Add(_sphereCollection);
         _collections.Add(_wireSphereCollection);
@@ -123,6 +127,15 @@ internal class DebugMeshDrawer
 
         var instance = GetAMeshInstance(transform, duration, color, layers, lineLength);
         _lineCollection.Add(instance);
+    }
+
+    internal void DrawWireQuad(Matrix4x4 transform, float duration, Color color, uint layers, float lineLength)
+    {
+        if((DebugDraw.GetEnabledLayers() | layers) == 0)
+            return;
+
+        var instance = GetAMeshInstance(transform, duration, color, layers, lineLength);
+        _wireQuadCollection.Add(instance);
     }
 
     internal void DrawBox(Matrix4x4 transform, float duration, Color color, uint layers)

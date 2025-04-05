@@ -8,12 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-### Changed
+- public static methods for drawing Box, Sphere, WireSphere, Line, Arrow.
+- DebugDraw.WireQuad() and DebugDraw.Quad() methods.
 
-### Deprecated
+### Obselete
 
-### Removed
-
-### Fixed
-
-### Security
+- [obselete] Fixed Arrow mesh rotations in world space by adding parameter for Arrow method(s) to use a provided up axis.

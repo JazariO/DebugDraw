@@ -196,14 +196,16 @@ namespace DebugDrawer
             });
         }
 
-        public static void WireArrow(Vector3 start, Vector3 end, float arrowLength = 1f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1)
+        public static void WireArrow(Vector3 start, Vector3 end, Vector3 up, float arrowLength = 1f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1)
         {
             InvokeWithInit(() =>
             {
                 float distance = (end - start).magnitude;
                 Vector3 direction = (end - start).normalized;
-                Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, (end - start).normalized);
-                Matrix4x4 transform = Matrix4x4.TRS(start, rotation, new Vector3(1,1, distance));
+
+                Quaternion rotation = Quaternion.LookRotation(direction, up);
+                
+                Matrix4x4 transform = Matrix4x4.TRS(start, rotation, new Vector3(1, 1, distance));
                 DebugDraw._meshDrawer.DrawArrow(transform, duration, color ?? Color.white, layers, arrowLength);
             });
         }

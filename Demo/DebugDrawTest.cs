@@ -68,7 +68,7 @@ public class DebugDrawTest : MonoBehaviour
         // Draw a wire arrow
         if(drawArrow)
         {
-            DebugDraw.WireArrow(arrowStartPosition, arrowEndPosition, arrowLength, Color.red);
+            DebugDraw.WireArrow(arrowStartPosition, arrowEndPosition, Vector3.up, arrowLength, Color.red);
         }
     }
 

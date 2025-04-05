@@ -150,6 +150,15 @@ namespace DebugDrawer
             });
         }
 
+        public static void Quad(Vector3 position, Quaternion normal, Vector3 scale, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1)
+        {
+            InvokeWithInit(() =>
+            {
+                Matrix4x4 transform = Matrix4x4.TRS(position, normal, scale);
+                DebugDraw._meshDrawer.DrawQuad(transform, duration, color ?? Color.white, layers, 1);
+            });
+        }
+
         /// <summary>
         /// Draws a runtime box shape.
         /// </summary>

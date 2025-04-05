@@ -33,6 +33,9 @@ namespace DebugDrawer
                 case DebugShape.WireSphere:
                     mesh = CreateWireSphereMesh(16, 16);
                     break;
+                case DebugShape.WireArrow:
+                    mesh = CreateWireArrowMesh(length);
+                    break;
                 case DebugShape.Arrow:
                     mesh = CreateArrowMesh(length);
                     break;
@@ -261,11 +264,11 @@ namespace DebugDrawer
         }
 
         /// <summary>
-        /// Returns an arrow mesh.
+        /// Returns a wire arrow mesh.
         /// </summary>
         /// <param name="arrowLength">The total length of the arrow. Tip to tail.</param>
         /// <returns></returns>
-        private static Mesh CreateArrowMesh(float arrowLength)
+        private static Mesh CreateWireArrowMesh(float arrowLength)
         {
             Mesh mesh = new();
 
@@ -297,6 +300,48 @@ namespace DebugDrawer
             mesh.RecalculateBounds();
             return mesh;
         }
+
+        /// <summary>
+        /// Returns an arrow mesh.
+        /// </summary>
+        /// <param name="arrowLength">The total length of the arrow. Tip to tail.</param>
+        /// <returns></returns>
+        private static Mesh CreateArrowMesh(float arrowLength)
+        {
+            Mesh mesh = new();
+
+            // Base Position
+            float bPos = Mathf.Clamp(arrowLength - 0.225f, 0, Mathf.Infinity);
+
+            // Define verticies and indices for an arrow
+            Vector3[] vertices =
+            {
+                new (0.0f, 0.0f, 0.0f),                                              // 0 Origin Point           
+                new (0.0f, 0.0f, Mathf.Clamp(arrowLength - 0.25f,0,Mathf.Infinity)), // 1 Arrowhead Base Centre  
+                new (-.2f, -.2f, bPos),                                              // 2 Arrowhead Base Square  
+                new (0.2f, -.2f, bPos),                                              // 3 ...                    
+                new (0.2f, 0.2f, bPos),                                              // 4 ...                    
+                new (-.2f, 0.2f, bPos),                                              // 5 ...                    
+                new (0.0f, 0.0f, Mathf.Clamp(arrowLength,0,Mathf.Infinity)),         // 6 Arrowhead Apex         
+            };
+
+            int[] indices =
+            {
+                // Tris
+                2,3,4,  //Arrow base
+                2,4,5,
+
+                2,3,6,  //Arrow faces
+                3,4,6,
+                4,5,6,
+                5,2,6
+            };
+
+            mesh.vertices = vertices;
+            mesh.SetIndices(indices, MeshTopology.Triangles, 0);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
     }
 
     internal enum DebugShape
@@ -307,6 +352,7 @@ namespace DebugDrawer
         Cube,
         Sphere,
         WireSphere,
+        WireArrow,
         Arrow,
         // Add other shapes as needed
     } 

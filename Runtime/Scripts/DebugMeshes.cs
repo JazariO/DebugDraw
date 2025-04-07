@@ -1,3 +1,5 @@
+using Codice.Client.Common.GameUI;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +11,7 @@ namespace DebugDrawer
     internal static class DebugMeshes
     {
         // Implement mesh construction methods for various shapes
-        internal static Mesh Construct(DebugShape shape, float length = 1)
+        internal static Mesh Construct(DebugShape shape, float length = 1f, float height = 2f, float radius = 1f)
         {
             Mesh mesh = new Mesh();
 
@@ -38,6 +40,9 @@ namespace DebugDrawer
                     break;
                 case DebugShape.Arrow:
                     mesh = CreateArrowMesh(length);
+                    break;
+                case DebugShape.WireCapsule:
+                    mesh = CreateWireCapsuleMesh(height, radius);
                     break;
                 // Implement other shapes
 
@@ -301,9 +306,7 @@ namespace DebugDrawer
             return mesh;
         }
 
-        /// <summary>
-        /// Returns an arrow mesh.
-        /// </summary>
+        /// <summary>Returns an arrow mesh.</summary>
         /// <param name="arrowLength">The total length of the arrow. Tip to tail.</param>
         /// <returns></returns>
         private static Mesh CreateArrowMesh(float arrowLength)
@@ -342,6 +345,195 @@ namespace DebugDrawer
             mesh.RecalculateBounds();
             return mesh;
         }
+
+        /// <summary> Returns a capsule mesh. </summary>
+        private static Mesh CreateWireCapsuleMesh(float height, float radius)
+        {
+            Mesh mesh = new();
+
+            float cylinderHeight = height * 0.5f - radius;
+            float topPoint =  cylinderHeight;
+            float botPoint = -cylinderHeight;
+
+            const int circleResolution = 50;
+            const int semiCircleResolution = circleResolution/2;
+
+            // Add cylinder body vertices
+            List<Vector3> vertices = new List<Vector3>()
+            {
+                // Cylinder Body Vertices
+                new ( 0 * radius, botPoint, 1 * radius), // 0
+                new ( 1 * radius, botPoint, 0 * radius), // 1
+                new ( 0 * radius, botPoint,-1 * radius), // 2
+                new (-1 * radius, botPoint, 0 * radius), // 3
+
+                new ( 0* radius, topPoint, 1 * radius), // 4
+                new ( 1* radius, topPoint, 0 * radius), // 5
+                new ( 0* radius, topPoint,-1 * radius), // 6
+                new (-1* radius, topPoint, 0 * radius), // 7
+            };
+
+            // Add cylinder base cap vertices
+            for(int i = 0; i < circleResolution; i++)
+            {
+                float p = 2 * Mathf.PI / circleResolution * i;
+                float cp = Mathf.Cos(p) * radius;
+                float sp = Mathf.Sin(p) * radius;
+
+                Vector3 v = new Vector3(cp, botPoint, sp);
+                vertices.Add(v);
+            }
+
+            // Add cylinder top cap vertices
+            for(int i = 0; i < circleResolution; i++)
+            {
+                float p = 2 * Mathf.PI / circleResolution * i;
+                float cp = Mathf.Cos(p) * radius;
+                float sp = Mathf.Sin(p) * radius;
+
+                Vector3 v = new Vector3(cp, topPoint, sp);
+                vertices.Add(v);
+            }
+
+            // Add cylinder base XY dome cross-shape vertices
+            for(int i = 0; i <= semiCircleResolution; i++)
+            { 
+                float p = Mathf.PI / semiCircleResolution * i;
+
+                float cp = Mathf.Cos(p) * radius;
+                float sp = Mathf.Sin(p) * radius;
+
+                Vector3 v = new Vector3(cp, botPoint - sp, 0);
+                vertices.Add(v);
+
+            }
+
+            // Add cylinder base ZY dome cross-shape vertices
+            for(int i = 0; i <= semiCircleResolution; i++)
+            {
+                float p = Mathf.PI / semiCircleResolution * i;
+
+                float cp = Mathf.Cos(p) * radius;
+                float sp = Mathf.Sin(p) * radius;
+
+                Vector3 v = new Vector3(0, botPoint - sp, cp);
+                vertices.Add(v);
+            }
+
+            // Add cylinder cap XY dome cross-shape vertices
+            for(int i = 0; i <= semiCircleResolution; i++)
+            {
+                float p = Mathf.PI / semiCircleResolution * i;
+
+                float cp = Mathf.Cos(p) * radius;
+                float sp = Mathf.Sin(p) * radius;
+
+                Vector3 v = new Vector3(cp, topPoint + sp, 0);
+                vertices.Add(v);
+            }
+
+            // Add cylinder cap ZY dome cross-shape vertices
+            for(int i = 0; i <= semiCircleResolution; i++)
+            {
+                float p = Mathf.PI / semiCircleResolution * i;
+
+                float cp = Mathf.Cos(p) * radius;
+                float sp = Mathf.Sin(p) * radius;
+
+                Vector3 v = new Vector3(0, topPoint + sp, cp);
+                vertices.Add(v);
+            }
+
+            // Add cylinder body indices
+            List<int> indices = new List<int>()
+            {
+                //Cylinder lines
+                0,4,
+                1,5,
+                2,6,
+                3,7,
+            };
+
+            // Add cylinder base indices
+            for(int i = 0; i < circleResolution; i++)
+            {
+                int first = 8 + i;
+                int next = 8 + ((i + 1) % circleResolution);
+                indices.Add(first);
+                indices.Add(next);
+            }
+
+            // Add cylinder top indices
+            for(int i = 0; i < circleResolution; i++)
+            {
+                int offset = 8 + circleResolution;
+                int first = offset + i;
+                int next = offset + ((i + 1) % circleResolution);
+                indices.Add(first);
+                indices.Add(next);
+            }
+
+            // Add cylinder base XY dome indices
+            for(int i = 0; i < semiCircleResolution - 1; i++)
+            {
+                int offset = 8 + circleResolution * 2 + i;
+                int first = offset;
+                int next = offset + 1;
+                indices.Add(first);
+                indices.Add(next);
+            }
+
+            // Connect last point to base cap circle vertex
+            indices.Add(8 + circleResolution * 2 + semiCircleResolution - 1);
+            indices.Add(3); // (0, botPoint, radius)
+
+            // Add cylinder base ZY dome cross-shape indices
+            for(int i = 1; i < semiCircleResolution; i++) // Skip over the previous line
+            {
+                int offset = 8 + circleResolution * 2 + semiCircleResolution + i;
+                int first = offset;
+                int next = offset + 1;
+                indices.Add(first);
+                indices.Add(next);
+            }
+
+            // Connect last point on ZY to base cap circle vertex
+            indices.Add(8 + circleResolution * 2 + semiCircleResolution * 2);
+            indices.Add(2);
+
+            // Add cylinder top XY dome cross-shape indices
+            for(int i = 1; i < semiCircleResolution; i++) // Skip over previous line
+            {
+                int offset = 8 + circleResolution * 2 + semiCircleResolution * 2 + i + 1;
+                int first = offset;
+                int next = offset + 1;
+                indices.Add(first);
+                indices.Add(next);
+            }
+
+            // Connect last point to top cap circle vertex
+            indices.Add(8 + circleResolution * 2 + semiCircleResolution * 3 + 1);
+            indices.Add(7);
+
+            // Add cylinder base ZY dome cross-shape indices
+            for(int i = 2; i <= semiCircleResolution; i++) // Skip over the previous line
+            {
+                int offset = 8 + circleResolution * 2 + semiCircleResolution * 3 + i + 1;
+                int first = offset;
+                int next = offset + 1;
+                indices.Add(first);
+                indices.Add(next);
+            }
+
+            // Connect last point to top cap circle vertex
+            indices.Add(8 + circleResolution * 2 + semiCircleResolution * 4 + 2);
+            indices.Add(6);
+
+            mesh.SetVertices(vertices);
+            mesh.SetIndices(indices, MeshTopology.Lines, 0);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
     }
 
     internal enum DebugShape
@@ -354,6 +546,8 @@ namespace DebugDrawer
         WireSphere,
         WireArrow,
         Arrow,
+        WireCapsule,
+        Capsule,
         // Add other shapes as needed
     } 
 }

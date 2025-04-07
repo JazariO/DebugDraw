@@ -22,6 +22,7 @@ internal class DebugMeshDrawer
     private readonly DebugMeshCollection _wireSphereCollection;
     private readonly DebugMeshCollection _wireArrowCollection;
     private readonly DebugMeshCollection _arrowCollection;
+    private readonly DebugMeshCollection _wireCapsuleCollection;
     // Add other collections as needed
 
     internal DebugMeshDrawer(DebugDraw parent)
@@ -42,6 +43,7 @@ internal class DebugMeshDrawer
         Mesh wireSphereMesh = DebugMeshes.Construct(DebugShape.WireSphere);
         Mesh wireArrowMesh = DebugMeshes.Construct(DebugShape.WireArrow);
         Mesh arrowMesh = DebugMeshes.Construct(DebugShape.Arrow);
+        Mesh wireCapsuleMesh = DebugMeshes.Construct(DebugShape.WireCapsule);
         // Create other meshes as needed
 
         // Create collections
@@ -53,6 +55,7 @@ internal class DebugMeshDrawer
         _wireSphereCollection = new DebugMeshCollection(wireSphereMesh, wireframeMaterial);
         _wireArrowCollection = new DebugMeshCollection(arrowMesh, wireframeMaterial);
         _arrowCollection = new DebugMeshCollection(arrowMesh, wireframeMaterial);
+        _wireCapsuleCollection = new DebugMeshCollection(wireCapsuleMesh, wireframeMaterial);
         // Add other collections as needed
 
         _collections.Add(_lineCollection);
@@ -63,6 +66,7 @@ internal class DebugMeshDrawer
         _collections.Add(_wireSphereCollection);
         _collections.Add(_wireArrowCollection);
         _collections.Add(_arrowCollection);
+        _collections.Add(_wireCapsuleCollection);
         // Add other collections as needed
 
         DebugMeshCollection.OnInstanceRemoved += inst => MeshPool.Return(inst);
@@ -86,7 +90,7 @@ internal class DebugMeshDrawer
         return material;
     }
 
-    private DrawMeshInstance GetAMeshInstance(Matrix4x4 transform, float duration, Color color, uint layers, float length = 1f)
+    private DrawMeshInstance GetAMeshInstance(Matrix4x4 transform, float duration, Color color, uint layers, float length = 1f, float height = 1f, float radius = 1f)
     {
         DrawMeshInstance inst = MeshPool.Retrieve();
         if(inst != null)
@@ -214,6 +218,25 @@ internal class DebugMeshDrawer
 
         // Create a mesh instance and add it to the custom collection
         var instance = GetAMeshInstance(transform, duration, color, layers, arrowLength);
+        customArrowCollection.Add(instance);
+
+        // Temporarily store the custom collection in a list to update it in the Update method
+        _collections.Add(customArrowCollection);
+    }
+
+    internal void DrawWireCapsule(Matrix4x4 transform, float duration, Color color, uint layers, float height, float radius)
+    {
+        if((DebugDraw.GetEnabledLayers() & layers) == 0)
+            return;
+
+        // Create a unique arrow mesh for the given arrowLength
+        Mesh customArrowMesh = DebugMeshes.Construct(DebugShape.WireCapsule, 1, height, radius);
+
+        // Create a new collection for this custom arrow mesh if it doesn't exist
+        DebugMeshCollection customArrowCollection = new DebugMeshCollection(customArrowMesh, _arrowCollection.Material);
+
+        // Create a mesh instance and add it to the custom collection
+        var instance = GetAMeshInstance(transform, duration, color, layers, 1);
         customArrowCollection.Add(instance);
 
         // Temporarily store the custom collection in a list to update it in the Update method

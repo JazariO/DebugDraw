@@ -240,6 +240,24 @@ namespace DebugDrawer
             });
         }
 
+        public static void WireCapsule(Vector3 point1, Vector3 point2, float radius = 1f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1)
+        {
+            InvokeWithInit(() =>
+            {
+                // Calculate the height from the given points
+                float height = Vector3.Distance(point1, point2) + radius * 2;
+
+                Vector3 centre = point1 + (point2 - point1) * 0.5f;
+
+                // Calculate the rotation between the given points
+                Quaternion rotation = Quaternion.FromToRotation(Vector3.up, point2 - point1);
+
+                // Pass radius to the mesh drawer
+                // Calculate the centre point as the midpoint between the two given points
+                Matrix4x4 transform = Matrix4x4.TRS(centre, rotation, Vector3.one);
+                DebugDraw._meshDrawer.DrawWireCapsule(transform, duration, color ?? Color.white, layers, height, radius);
+            });
+        }
         // Implement other shapes (Cylinder, Capsule, etc.) similarly
 
         #endregion

@@ -1,6 +1,6 @@
 {
   "name": "com.proselyte.debugdraw",
-  "version": "0.2.1-alpha06",
+  "version": "0.2.1-alpha07",
   "displayName": "Debug Draw",
   "description": "Expanded runtime debug visuals in unity.",
   "unity": "6000.0",

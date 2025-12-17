@@ -1,7 +1,13 @@
 {
-  "name": "com.jazari.debugdraw",
+  "name": "com.proselyte.debugdraw",
   "version": "0.2.1-alpha05",
   "displayName": "Debug Draw",
-  "description": "A package for runtime debug visuals.",
-  "unity": "6000.0"
+  "description": "Expanded runtime debug visuals in unity.",
+  "unity": "6000.0",
+  "license": "MIT",
+  "author": {
+    "name": "Jazari",
+    "url": "https://github.com/JazariO"
+  },
+  "_fingerprint": "39cfae8ad0ab4f58ab05d002926f4f20262c9804"
 }

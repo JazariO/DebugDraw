@@ -1,6 +1,6 @@
 {
   "name": "com.jazari.debugdraw",
-  "version": "0.2.1-alpha04",
+  "version": "0.2.1-alpha05",
   "displayName": "Debug Draw",
   "description": "A package for runtime debug visuals.",
   "unity": "6000.0"

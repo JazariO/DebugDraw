@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DebugDrawer
+namespace Proselyte.DebugDrawer
 {
     /// <summary>
     /// Base class for all drawable instances

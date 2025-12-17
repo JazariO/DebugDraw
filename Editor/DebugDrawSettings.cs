@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 
-namespace DebugDrawer.Editor
+namespace Proselyte.DebugDrawer.Editor
 {
     public class DebugDrawSettings : ScriptableObject
     {

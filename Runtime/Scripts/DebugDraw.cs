@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-namespace DebugDrawer
+namespace Proselyte.DebugDrawer
 {
     [Flags]
     public enum DebugLayers : uint

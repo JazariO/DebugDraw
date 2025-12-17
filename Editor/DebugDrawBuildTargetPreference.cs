@@ -1,6 +1,6 @@
 using UnityEditor;
 
-namespace DebugDrawer.Editor
+namespace Proselyte.DebugDrawer.Editor
 {
 	[System.Serializable]
 	public class DebugDrawBuildTargetPreference

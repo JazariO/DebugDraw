@@ -1,6 +1,6 @@
 using UnityEditor;
 using UnityEngine;
-using DebugDrawer.Editor;
+using Proselyte.DebugDrawer.Editor;
 
 [CustomEditor(typeof(DebugDrawSettings))]
 public class DebugDrawSettingsEditor : Editor

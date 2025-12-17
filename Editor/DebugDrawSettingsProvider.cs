@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.Build; // For NamedBuildTarget support
 using UnityEngine;
 
-namespace DebugDrawer.Editor
+namespace Proselyte.DebugDrawer.Editor
 {
     static class DebugDrawSettingsProvider
     {

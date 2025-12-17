@@ -1,5 +1,5 @@
 {
-    "name": "DebugDrawer",
+    "name": "Proselyte.DebugDrawer",
     "rootNamespace": "",
     "references": [
         ""

@@ -1,5 +1,5 @@
 {
-    "name": "DebugDrawer.Editor",
+    "name": "Proselyte.DebugDrawer.Editor",
     "rootNamespace": "",
     "references": [
         "GUID:4905f5509a1dd0a44aa97684b769caca"

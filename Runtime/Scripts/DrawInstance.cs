@@ -11,16 +11,19 @@ namespace DebugDrawer
         internal bool BeenDrawn;
         protected float ExpirationTime;
         internal uint DrawLayers;
+        protected bool UseFixedTime;
 
-        internal void SetDuration(float duration)
+        internal void SetDuration(float duration, bool fromFixedUpdate = false)
         {
+            UseFixedTime = fromFixedUpdate;
             ExpirationTime = Time.time + duration;
             BeenDrawn = false;
         }
 
         internal virtual bool IsExpired()
         {
-            return (Time.time > ExpirationTime && BeenDrawn);
+            float currentTime = UseFixedTime ? Time.fixedTime : Time.time;
+            return (currentTime > ExpirationTime && BeenDrawn);
         }
 
         public virtual void Reset()
@@ -29,6 +32,7 @@ namespace DebugDrawer
             Color = default;
             ExpirationTime = 0f;
             DrawLayers = 0;
+            UseFixedTime = false;
         }
     }
 

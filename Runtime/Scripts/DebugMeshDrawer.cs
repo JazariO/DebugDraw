@@ -90,14 +90,14 @@ internal class DebugMeshDrawer
         return material;
     }
 
-    private DrawMeshInstance GetAMeshInstance(Matrix4x4 transform, float duration, Color color, uint layers, float length = 1f, float height = 1f, float radius = 1f)
+    private DrawMeshInstance GetAMeshInstance(Matrix4x4 transform, float duration, Color color, uint layers, float length = 1f, float height = 1f, float radius = 1f, bool fromFixedUpdate = false)
     {
         DrawMeshInstance inst = MeshPool.Retrieve();
         if(inst != null)
         {
             inst.Transform = transform;
             inst.length = length;
-            inst.SetDuration(duration);
+            inst.SetDuration(duration, fromFixedUpdate: fromFixedUpdate);
             inst.Color = color;
             inst.DrawLayers = layers;
         }
@@ -132,61 +132,61 @@ internal class DebugMeshDrawer
 
     #region Drawing Methods
 
-    internal void DrawLine(Matrix4x4 transform, float duration, Color color, uint layers, float lineLength)
+    internal void DrawLine(Matrix4x4 transform, float duration, Color color, uint layers, float lineLength, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
-        var instance = GetAMeshInstance(transform, duration, color, layers, lineLength);
+        var instance = GetAMeshInstance(transform, duration, color, layers, lineLength, 1, 1, fromFixedUpdate);
         _lineCollection.Add(instance);
     }
 
-    internal void DrawWireQuad(Matrix4x4 transform, float duration, Color color, uint layers, float lineLength)
+    internal void DrawWireQuad(Matrix4x4 transform, float duration, Color color, uint layers, float lineLength, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() | layers) == 0)
             return;
 
-        var instance = GetAMeshInstance(transform, duration, color, layers, lineLength);
+        var instance = GetAMeshInstance(transform, duration, color, layers, lineLength, 1, 1, fromFixedUpdate);
         _wireQuadCollection.Add(instance);
     }
     
-    internal void DrawQuad(Matrix4x4 transform, float duration, Color color, uint layers, float lineLength)
+    internal void DrawQuad(Matrix4x4 transform, float duration, Color color, uint layers, float length, float height, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() | layers) == 0)
             return;
 
-        var instance = GetAMeshInstance(transform, duration, color, layers, lineLength);
+        var instance = GetAMeshInstance(transform, duration, color, layers, length, height, 1, fromFixedUpdate);
         _quadCollection.Add(instance);
     }
 
-    internal void DrawBox(Matrix4x4 transform, float duration, Color color, uint layers)
+    internal void DrawBox(Matrix4x4 transform, float duration, Color color, uint layers, float length, float height, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
-        var instance = GetAMeshInstance(transform, duration, color, layers);
+        var instance = GetAMeshInstance(transform, duration, color, layers, length, height, 1, fromFixedUpdate);
         _boxCollection.Add(instance);
     }
 
-    internal void DrawSphere(Matrix4x4 transform, float duration, Color color, uint layers)
+    internal void DrawSphere(Matrix4x4 transform, float duration, Color color, uint layers, float radius, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
-        var instance = GetAMeshInstance(transform, duration, color, layers);
+        var instance = GetAMeshInstance(transform, duration, color, layers, 1, 1, radius, fromFixedUpdate);
         _sphereCollection.Add(instance);
     }
 
-    internal void DrawWireSphere(Matrix4x4 transform, float duration, Color color, uint layers)
+    internal void DrawWireSphere(Matrix4x4 transform, float duration, Color color, uint layers, float radius, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
-        var instance = GetAMeshInstance(transform, duration, color, layers);
+        var instance = GetAMeshInstance(transform, duration, color, layers, 1, 1, radius, fromFixedUpdate);
         _wireSphereCollection.Add(instance);
     }
 
-    internal void DrawWireArrow(Matrix4x4 transform, float duration, Color color, uint layers, float arrowLength)
+    internal void DrawWireArrow(Matrix4x4 transform, float duration, Color color, uint layers, float arrowLength, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
@@ -198,14 +198,14 @@ internal class DebugMeshDrawer
         DebugMeshCollection customArrowCollection = new DebugMeshCollection(customArrowMesh, _wireArrowCollection.Material);
 
         // Create a mesh instance and add it to the custom collection
-        var instance = GetAMeshInstance(transform, duration, color, layers, arrowLength);
+        var instance = GetAMeshInstance(transform, duration, color, layers, arrowLength, 1, 1, fromFixedUpdate);
         customArrowCollection.Add(instance);
 
         // Temporarily store the custom collection in a list to update it in the Update method
         _collections.Add(customArrowCollection);
     }
 
-    internal void DrawArrow(Matrix4x4 transform, float duration, Color color, uint layers, float arrowLength)
+    internal void DrawArrow(Matrix4x4 transform, float duration, Color color, uint layers, float arrowLength, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
@@ -217,14 +217,14 @@ internal class DebugMeshDrawer
         DebugMeshCollection customArrowCollection = new DebugMeshCollection(customArrowMesh, _arrowCollection.Material);
 
         // Create a mesh instance and add it to the custom collection
-        var instance = GetAMeshInstance(transform, duration, color, layers, arrowLength);
+        var instance = GetAMeshInstance(transform, duration, color, layers, arrowLength, 1, 1, fromFixedUpdate);
         customArrowCollection.Add(instance);
 
         // Temporarily store the custom collection in a list to update it in the Update method
         _collections.Add(customArrowCollection);
     }
 
-    internal void DrawWireCapsule(Matrix4x4 transform, float duration, Color color, uint layers, float height, float radius)
+    internal void DrawWireCapsule(Matrix4x4 transform, float duration, Color color, uint layers, float length, float height, float radius, bool fromFixedUpdate = false)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
@@ -236,7 +236,7 @@ internal class DebugMeshDrawer
         DebugMeshCollection customArrowCollection = new DebugMeshCollection(customArrowMesh, _arrowCollection.Material);
 
         // Create a mesh instance and add it to the custom collection
-        var instance = GetAMeshInstance(transform, duration, color, layers, 1);
+        var instance = GetAMeshInstance(transform, duration, color, layers, length, height, radius, fromFixedUpdate);
         customArrowCollection.Add(instance);
 
         // Temporarily store the custom collection in a list to update it in the Update method

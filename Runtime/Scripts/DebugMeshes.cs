@@ -8,15 +8,15 @@ namespace Proselyte.DebugDrawer
     /// </summary>
     internal static class DebugMeshes
     {
-        // Implement mesh construction methods for various shapes
-        internal static Mesh Construct(DebugShape shape, float length = 1f, float height = 2f, float radius = 1f)
+        // FIXED: Removed parameters from Construct - all meshes are now unit-sized and scaled via transforms
+        internal static Mesh Construct(DebugShape shape)
         {
             Mesh mesh = new Mesh();
 
             switch(shape)
             {
                 case DebugShape.Line:
-                    mesh = CreateLineMesh(length);
+                    mesh = CreateLineMesh();
                     break;
                 case DebugShape.WireQuad:
                     mesh = CreateWireQuadMesh();
@@ -34,15 +34,17 @@ namespace Proselyte.DebugDrawer
                     mesh = CreateWireSphereMesh(16, 16);
                     break;
                 case DebugShape.WireArrow:
-                    mesh = CreateWireArrowMesh(length);
+                    mesh = CreateWireArrowMesh();
                     break;
                 case DebugShape.Arrow:
-                    mesh = CreateArrowMesh(length);
+                    mesh = CreateArrowMesh();
                     break;
-                case DebugShape.WireCapsule:
-                    mesh = CreateWireCapsuleMesh(height, radius);
+                case DebugShape.CapsuleDome:
+                    mesh = CreateCapsuleDomeMesh();
                     break;
-                // Implement other shapes
+                case DebugShape.CapsuleCylinder:
+                    mesh = CreateCapsuleCylinderMesh();
+                    break;
 
                 default:
                     Debug.LogError($"DebugShape {shape} not implemented");
@@ -51,24 +53,158 @@ namespace Proselyte.DebugDrawer
             return mesh;
         }
 
-        private static Mesh CreateLineMesh(float lineLength)
+        /// <summary>
+        /// Creates a hemisphere dome wireframe consisting of:
+        /// - Rim circle in XZ plane
+        /// - Vertical arc in ZY plane
+        /// - Vertical arc in XY plane
+        /// No grid lines, no triangles.
+        /// </summary>
+        private static Mesh CreateCapsuleDomeMesh()
+        {
+            Mesh mesh = new Mesh();
+            List<Vector3> vertices = new List<Vector3>();
+            List<int> indices = new List<int>();
+
+            const int segments = 32;
+            float radius = 0.5f;
+
+            // --- 1. XZ PLANE RIM CIRCLE ---
+            int xzStart = vertices.Count;
+            for(int i = 0; i <= segments; i++)
+            {
+                float angle = i * 2f * Mathf.PI / segments;
+                float x = Mathf.Cos(angle) * radius;
+                float z = Mathf.Sin(angle) * radius;
+                vertices.Add(new Vector3(x, 0f, z));
+            }
+            for(int i = 0; i < segments; i++)
+            {
+                indices.Add(xzStart + i);
+                indices.Add(xzStart + i + 1);
+            }
+
+            // --- 2. ZY PLANE ARC  ---
+            int zyStart = vertices.Count;
+            for(int i = 0; i <= segments; i++)
+            {
+                float t = i / (float)segments;
+                float theta = t * Mathf.PI;
+
+                float z = Mathf.Cos(theta) * radius;
+                float y = Mathf.Sin(theta) * radius;
+
+                vertices.Add(new Vector3(0f, y, z));
+            }
+            for(int i = 0; i < segments; i++)
+            {
+                indices.Add(zyStart + i);
+                indices.Add(zyStart + i + 1);
+            }
+
+            // --- 3. XY PLANE ARC  ---
+            int xyStart = vertices.Count;
+            for(int i = 0; i <= segments; i++)
+            {
+                float t = i / (float)segments;
+                float theta = t * Mathf.PI;
+
+                float x = Mathf.Cos(theta) * radius;
+                float y = Mathf.Sin(theta) * radius;
+
+                vertices.Add(new Vector3(x, y, 0f));
+            }
+            for(int i = 0; i < segments; i++)
+            {
+                indices.Add(xyStart + i);
+                indices.Add(xyStart + i + 1);
+            }
+
+            mesh.SetVertices(vertices);
+            mesh.SetIndices(indices, MeshTopology.Lines, 0);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+
+        /// <summary>
+        /// Creates a unit cylinder for capsule body.
+        /// Cylinder is 1 unit tall, 1 unit diameter, centered at origin.
+        /// </summary>
+        private static Mesh CreateCapsuleCylinderMesh()
+        {
+            Mesh mesh = new Mesh();
+            List<Vector3> vertices = new List<Vector3>();
+            List<int> indices = new List<int>();
+
+            const int circleSegments = 32;
+            float radius = 0.5f;
+
+            // Top circle vertices
+            for(int i = 0; i <= circleSegments; i++)
+            {
+                float angle = i * 2 * Mathf.PI / circleSegments;
+                float x = Mathf.Cos(angle) * radius;
+                float z = Mathf.Sin(angle) * radius;
+                vertices.Add(new Vector3(x, 0.5f, z)); // Top at Y = 0.5
+            }
+
+            // Bottom circle vertices
+            for(int i = 0; i <= circleSegments; i++)
+            {
+                float angle = i * 2 * Mathf.PI / circleSegments;
+                float x = Mathf.Cos(angle) * radius;
+                float z = Mathf.Sin(angle) * radius;
+                vertices.Add(new Vector3(x, -0.5f, z)); // Bottom at Y = -0.5
+            }
+
+            // Top circle lines
+            for(int i = 0; i < circleSegments; i++)
+            {
+                indices.Add(i);
+                indices.Add(i + 1);
+            }
+
+            // Bottom circle lines
+            int bottomOffset = circleSegments + 1;
+            for(int i = 0; i < circleSegments; i++)
+            {
+                indices.Add(bottomOffset + i);
+                indices.Add(bottomOffset + i + 1);
+            }
+
+            // Vertical lines connecting top and bottom
+            for(int i = 0; i <= circleSegments; i += circleSegments / 4) // 4 vertical lines
+            {
+                indices.Add(i);
+                indices.Add(bottomOffset + i);
+            }
+
+            mesh.SetVertices(vertices);
+            mesh.SetIndices(indices, MeshTopology.Lines, 0);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static Mesh CreateLineMesh()
         {
             Mesh mesh = new Mesh();
 
-            // Define vertices and indices for a line
+            // Unit line along Z axis
             Vector3[] vertices =
             {
-                new (0, 0, 0),
-                new (0, 0, Mathf.Clamp(lineLength, 0, Mathf.Infinity))
+                new Vector3(0, 0, 0),
+                new Vector3(0, 0, 1)
             };
 
             int[] indices =
             {
-                0,1
+                0, 1
             };
 
             mesh.vertices = vertices;
             mesh.SetIndices(indices, MeshTopology.Lines, 0);
+            mesh.RecalculateBounds();
             return mesh;
         }
 
@@ -76,22 +212,21 @@ namespace Proselyte.DebugDrawer
         {
             Mesh mesh = new Mesh();
 
-            // Define vertices and indices for a quad
+            // FIXED: Quad in XY plane (Z forward is normal)
             Vector3[] vertices =
             {
-                new Vector2(-1, 1),
-                new Vector2( 1, 1),
-                new Vector2(-1,-1),
-                new Vector2( 1,-1)
+                new Vector3(-0.5f,  0.5f, 0), // Top-left
+                new Vector3( 0.5f,  0.5f, 0), // Top-right
+                new Vector3( 0.5f, -0.5f, 0), // Bottom-right
+                new Vector3(-0.5f, -0.5f, 0)  // Bottom-left
             };
 
             int[] indices = new int[]
             {
-                0,1,
-                1,2,
-                2,0,
-                1,3,
-                3,2
+                0, 1,
+                1, 2,
+                2, 3,
+                3, 0
             };
 
             mesh.SetVertices(vertices);
@@ -104,19 +239,19 @@ namespace Proselyte.DebugDrawer
         {
             Mesh mesh = new Mesh();
 
-            // Define vertices and indices for a quad
+            // FIXED: Quad in XY plane (Z forward is normal), facing positive Z
             Vector3[] vertices =
             {
-                new Vector2(-1, 1),
-                new Vector2( 1, 1),
-                new Vector2(-1,-1),
-                new Vector2( 1,-1)
+                new Vector3(-0.5f,  0.5f, 0), // Top-left
+                new Vector3( 0.5f,  0.5f, 0), // Top-right
+                new Vector3( 0.5f, -0.5f, 0), // Bottom-right
+                new Vector3(-0.5f, -0.5f, 0)  // Bottom-left
             };
 
             int[] indices = new int[]
             {
-                2,0,1,
-                2,1,3
+                0, 1, 2,  // First triangle (counter-clockwise when viewed from +Z)
+                0, 2, 3   // Second triangle
             };
 
             mesh.SetVertices(vertices);
@@ -127,27 +262,27 @@ namespace Proselyte.DebugDrawer
 
         private static Mesh CreateCubeMesh()
         {
-            Mesh mesh = new();
+            Mesh mesh = new Mesh();
 
             // Define vertices and indices for a cube
             Vector3[] vertices =
             {
-                new (-0.5f, -0.5f, -0.5f),
-                new ( 0.5f, -0.5f, -0.5f),
-                new ( 0.5f,  0.5f, -0.5f),
-                new (-0.5f,  0.5f, -0.5f),
-                new (-0.5f, -0.5f,  0.5f),
-                new ( 0.5f, -0.5f,  0.5f),
-                new ( 0.5f,  0.5f,  0.5f),
-                new (-0.5f,  0.5f,  0.5f)
+                new Vector3(-0.5f, -0.5f, -0.5f),
+                new Vector3( 0.5f, -0.5f, -0.5f),
+                new Vector3( 0.5f,  0.5f, -0.5f),
+                new Vector3(-0.5f,  0.5f, -0.5f),
+                new Vector3(-0.5f, -0.5f,  0.5f),
+                new Vector3( 0.5f, -0.5f,  0.5f),
+                new Vector3( 0.5f,  0.5f,  0.5f),
+                new Vector3(-0.5f,  0.5f,  0.5f)
             };
 
             int[] indices =
             {
                 // Lines
-                0,1, 1,2, 2,3, 3,0, // Bottom face
-                4,5, 5,6, 6,7, 7,4, // Top face
-                0,4, 1,5, 2,6, 3,7  // Sides
+                0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                0, 4, 1, 5, 2, 6, 3, 7  // Sides
             };
 
             mesh.vertices = vertices;
@@ -158,7 +293,6 @@ namespace Proselyte.DebugDrawer
 
         private static Mesh CreateSphereMesh(int longitudeSegments, int latitudeSegments)
         {
-            // Implement sphere mesh generation
             Mesh mesh = new Mesh();
             List<Vector3> vertices = new List<Vector3>();
             List<int> indices = new List<int>();
@@ -211,7 +345,6 @@ namespace Proselyte.DebugDrawer
 
         private static Mesh CreateWireSphereMesh(int longitudeSegments, int latitudeSegments)
         {
-            // Implement wire sphere mesh generation
             Mesh mesh = new Mesh();
             List<Vector3> vertices = new List<Vector3>();
             List<int> indices = new List<int>();
@@ -267,35 +400,39 @@ namespace Proselyte.DebugDrawer
         }
 
         /// <summary>
-        /// Returns a wire arrow mesh.
+        /// Returns a unit-sized wire arrow mesh.
+        /// FIXED: No parameters - size controlled by transform scale.
+        /// Arrow points along +Z axis with base at origin.
         /// </summary>
-        /// <param name="arrowLength">The total length of the arrow. Tip to tail.</param>
-        /// <returns></returns>
-        private static Mesh CreateWireArrowMesh(float arrowLength)
+        private static Mesh CreateWireArrowMesh()
         {
-            Mesh mesh = new();
+            Mesh mesh = new Mesh();
 
-            // Base Position
-            float bPos = Mathf.Clamp(arrowLength - 0.225f, 0, Mathf.Infinity);
+            // Unit arrow - arrowhead at Z=1, base at Z=0
+            // Arrowhead size is 0.25 units (will scale with transform)
+            float shaftEnd = 0.75f;
+            float headBase = 0.75f;
+            float headSize = 0.2f;
 
-            // Define verticies and indices for an arrow
             Vector3[] vertices =
             {
-                new (0.0f, 0.0f, 0.0f),                                              // 0 Origin Point           
-                new (0.0f, 0.0f, Mathf.Clamp(arrowLength - 0.25f,0,Mathf.Infinity)), // 1 Arrowhead Base Centre  
-                new (-.2f, -.2f, bPos),                                              // 2 Arrowhead Base Square  
-                new (0.2f, -.2f, bPos),                                              // 3 ...                    
-                new (0.2f, 0.2f, bPos),                                              // 4 ...                    
-                new (-.2f, 0.2f, bPos),                                              // 5 ...                    
-                new (0.0f, 0.0f, Mathf.Clamp(arrowLength,0,Mathf.Infinity)),         // 6 Arrowhead Apex         
+                new Vector3(0.0f, 0.0f, 0.0f),        // 0 Origin Point
+                new Vector3(0.0f, 0.0f, shaftEnd),    // 1 Shaft end / Arrowhead base center
+                new Vector3(-headSize, -headSize, headBase), // 2 Arrowhead base square
+                new Vector3( headSize, -headSize, headBase), // 3
+                new Vector3( headSize,  headSize, headBase), // 4
+                new Vector3(-headSize,  headSize, headBase), // 5
+                new Vector3(0.0f, 0.0f, 1.0f),        // 6 Arrowhead apex
             };
 
             int[] indices =
             {
-                // Lines
-                0,1,                // Origin to Arrowhead Base
-                2,3, 3,4, 4,5, 5,2, // Arrowhead Base
-                2,6, 3,6, 4,6, 5,6  // Arrowhead Tip
+                // Shaft
+                0, 1,
+                // Arrowhead base square
+                2, 3, 3, 4, 4, 5, 5, 2,
+                // Arrowhead edges to apex
+                2, 6, 3, 6, 4, 6, 5, 6
             };
 
             mesh.vertices = vertices;
@@ -304,231 +441,43 @@ namespace Proselyte.DebugDrawer
             return mesh;
         }
 
-        /// <summary>Returns an arrow mesh.</summary>
-        /// <param name="arrowLength">The total length of the arrow. Tip to tail.</param>
-        /// <returns></returns>
-        private static Mesh CreateArrowMesh(float arrowLength)
+        /// <summary>
+        /// Returns a unit-sized filled arrow mesh.
+        /// FIXED: No parameters - size controlled by transform scale.
+        /// </summary>
+        private static Mesh CreateArrowMesh()
         {
-            Mesh mesh = new();
+            Mesh mesh = new Mesh();
 
-            // Base Position
-            float bPos = Mathf.Clamp(arrowLength - 0.225f, 0, Mathf.Infinity);
+            float shaftEnd = 0.75f;
+            float headBase = 0.75f;
+            float headSize = 0.2f;
 
-            // Define verticies and indices for an arrow
             Vector3[] vertices =
             {
-                new (0.0f, 0.0f, 0.0f),                                              // 0 Origin Point           
-                new (0.0f, 0.0f, Mathf.Clamp(arrowLength - 0.25f,0,Mathf.Infinity)), // 1 Arrowhead Base Centre  
-                new (-.2f, -.2f, bPos),                                              // 2 Arrowhead Base Square  
-                new (0.2f, -.2f, bPos),                                              // 3 ...                    
-                new (0.2f, 0.2f, bPos),                                              // 4 ...                    
-                new (-.2f, 0.2f, bPos),                                              // 5 ...                    
-                new (0.0f, 0.0f, Mathf.Clamp(arrowLength,0,Mathf.Infinity)),         // 6 Arrowhead Apex         
+                new Vector3(0.0f, 0.0f, 0.0f),        // 0 Origin Point
+                new Vector3(0.0f, 0.0f, shaftEnd),    // 1 Shaft end / Arrowhead base center
+                new Vector3(-headSize, -headSize, headBase), // 2 Arrowhead base square
+                new Vector3( headSize, -headSize, headBase), // 3
+                new Vector3( headSize,  headSize, headBase), // 4
+                new Vector3(-headSize,  headSize, headBase), // 5
+                new Vector3(0.0f, 0.0f, 1.0f),        // 6 Arrowhead apex
             };
 
             int[] indices =
             {
-                // Tris
-                2,3,4,  //Arrow base
-                2,4,5,
-
-                2,3,6,  //Arrow faces
-                3,4,6,
-                4,5,6,
-                5,2,6
+                // Arrowhead base (two triangles)
+                2, 3, 4,
+                2, 4, 5,
+                // Arrowhead faces (pyramid)
+                2, 3, 6,
+                3, 4, 6,
+                4, 5, 6,
+                5, 2, 6
             };
 
             mesh.vertices = vertices;
             mesh.SetIndices(indices, MeshTopology.Triangles, 0);
-            mesh.RecalculateBounds();
-            return mesh;
-        }
-
-        /// <summary> Returns a capsule mesh. </summary>
-        private static Mesh CreateWireCapsuleMesh(float height, float radius)
-        {
-            Mesh mesh = new();
-
-            float cylinderHeight = height * 0.5f - radius;
-            float topPoint =  cylinderHeight;
-            float botPoint = -cylinderHeight;
-
-            const int circleResolution = 50;
-            const int semiCircleResolution = circleResolution/2;
-
-            // Add cylinder body vertices
-            List<Vector3> vertices = new List<Vector3>()
-            {
-                // Cylinder Body Vertices
-                new ( 0 * radius, botPoint, 1 * radius), // 0
-                new ( 1 * radius, botPoint, 0 * radius), // 1
-                new ( 0 * radius, botPoint,-1 * radius), // 2
-                new (-1 * radius, botPoint, 0 * radius), // 3
-
-                new ( 0* radius, topPoint, 1 * radius), // 4
-                new ( 1* radius, topPoint, 0 * radius), // 5
-                new ( 0* radius, topPoint,-1 * radius), // 6
-                new (-1* radius, topPoint, 0 * radius), // 7
-            };
-
-            // Add cylinder base cap vertices
-            for(int i = 0; i < circleResolution; i++)
-            {
-                float p = 2 * Mathf.PI / circleResolution * i;
-                float cp = Mathf.Cos(p) * radius;
-                float sp = Mathf.Sin(p) * radius;
-
-                Vector3 v = new Vector3(cp, botPoint, sp);
-                vertices.Add(v);
-            }
-
-            // Add cylinder top cap vertices
-            for(int i = 0; i < circleResolution; i++)
-            {
-                float p = 2 * Mathf.PI / circleResolution * i;
-                float cp = Mathf.Cos(p) * radius;
-                float sp = Mathf.Sin(p) * radius;
-
-                Vector3 v = new Vector3(cp, topPoint, sp);
-                vertices.Add(v);
-            }
-
-            // Add cylinder base XY dome cross-shape vertices
-            for(int i = 0; i <= semiCircleResolution; i++)
-            { 
-                float p = Mathf.PI / semiCircleResolution * i;
-
-                float cp = Mathf.Cos(p) * radius;
-                float sp = Mathf.Sin(p) * radius;
-
-                Vector3 v = new Vector3(cp, botPoint - sp, 0);
-                vertices.Add(v);
-
-            }
-
-            // Add cylinder base ZY dome cross-shape vertices
-            for(int i = 0; i <= semiCircleResolution; i++)
-            {
-                float p = Mathf.PI / semiCircleResolution * i;
-
-                float cp = Mathf.Cos(p) * radius;
-                float sp = Mathf.Sin(p) * radius;
-
-                Vector3 v = new Vector3(0, botPoint - sp, cp);
-                vertices.Add(v);
-            }
-
-            // Add cylinder cap XY dome cross-shape vertices
-            for(int i = 0; i <= semiCircleResolution; i++)
-            {
-                float p = Mathf.PI / semiCircleResolution * i;
-
-                float cp = Mathf.Cos(p) * radius;
-                float sp = Mathf.Sin(p) * radius;
-
-                Vector3 v = new Vector3(cp, topPoint + sp, 0);
-                vertices.Add(v);
-            }
-
-            // Add cylinder cap ZY dome cross-shape vertices
-            for(int i = 0; i <= semiCircleResolution; i++)
-            {
-                float p = Mathf.PI / semiCircleResolution * i;
-
-                float cp = Mathf.Cos(p) * radius;
-                float sp = Mathf.Sin(p) * radius;
-
-                Vector3 v = new Vector3(0, topPoint + sp, cp);
-                vertices.Add(v);
-            }
-
-            // Add cylinder body indices
-            List<int> indices = new List<int>()
-            {
-                //Cylinder lines
-                0,4,
-                1,5,
-                2,6,
-                3,7,
-            };
-
-            // Add cylinder base indices
-            for(int i = 0; i < circleResolution; i++)
-            {
-                int first = 8 + i;
-                int next = 8 + ((i + 1) % circleResolution);
-                indices.Add(first);
-                indices.Add(next);
-            }
-
-            // Add cylinder top indices
-            for(int i = 0; i < circleResolution; i++)
-            {
-                int offset = 8 + circleResolution;
-                int first = offset + i;
-                int next = offset + ((i + 1) % circleResolution);
-                indices.Add(first);
-                indices.Add(next);
-            }
-
-            // Add cylinder base XY dome indices
-            for(int i = 0; i < semiCircleResolution - 1; i++)
-            {
-                int offset = 8 + circleResolution * 2 + i;
-                int first = offset;
-                int next = offset + 1;
-                indices.Add(first);
-                indices.Add(next);
-            }
-
-            // Connect last point to base cap circle vertex
-            indices.Add(8 + circleResolution * 2 + semiCircleResolution - 1);
-            indices.Add(3); // (0, botPoint, radius)
-
-            // Add cylinder base ZY dome cross-shape indices
-            for(int i = 1; i < semiCircleResolution; i++) // Skip over the previous line
-            {
-                int offset = 8 + circleResolution * 2 + semiCircleResolution + i;
-                int first = offset;
-                int next = offset + 1;
-                indices.Add(first);
-                indices.Add(next);
-            }
-
-            // Connect last point on ZY to base cap circle vertex
-            indices.Add(8 + circleResolution * 2 + semiCircleResolution * 2);
-            indices.Add(2);
-
-            // Add cylinder top XY dome cross-shape indices
-            for(int i = 1; i < semiCircleResolution; i++) // Skip over previous line
-            {
-                int offset = 8 + circleResolution * 2 + semiCircleResolution * 2 + i + 1;
-                int first = offset;
-                int next = offset + 1;
-                indices.Add(first);
-                indices.Add(next);
-            }
-
-            // Connect last point to top cap circle vertex
-            indices.Add(8 + circleResolution * 2 + semiCircleResolution * 3 + 1);
-            indices.Add(7);
-
-            // Add cylinder base ZY dome cross-shape indices
-            for(int i = 2; i <= semiCircleResolution; i++) // Skip over the previous line
-            {
-                int offset = 8 + circleResolution * 2 + semiCircleResolution * 3 + i + 1;
-                int first = offset;
-                int next = offset + 1;
-                indices.Add(first);
-                indices.Add(next);
-            }
-
-            // Connect last point to top cap circle vertex
-            indices.Add(8 + circleResolution * 2 + semiCircleResolution * 4 + 2);
-            indices.Add(6);
-
-            mesh.SetVertices(vertices);
-            mesh.SetIndices(indices, MeshTopology.Lines, 0);
             mesh.RecalculateBounds();
             return mesh;
         }
@@ -544,8 +493,9 @@ namespace Proselyte.DebugDrawer
         WireSphere,
         WireArrow,
         Arrow,
-        WireCapsule,
+        CapsuleDome,      // Hemisphere for capsule ends
+        CapsuleCylinder,  // Cylinder for capsule body
+        WireCapsule,      // Deprecated - kept for compatibility
         Capsule,
-        // Add other shapes as needed
-    } 
+    }
 }

@@ -82,13 +82,23 @@ namespace Proselyte.DebugDrawer
             _meshDrawer.Update();
         }
 
+        void OnDestroy()
+        {
+            if(_instance == this)
+            {
+                _meshDrawer?.Cleanup();
+                _meshDrawer = null;
+                _instance = null;
+            }
+        }
+
         [System.Diagnostics.Conditional("DEBUG_DRAW")]
         public static void SetDrawingDepthTestEnabled(bool enabled)
         {
             if(enabled != _doDepthTest)
             {
                 _doDepthTest = enabled;
-                _meshDrawer.SetDepthTestEnabled(_doDepthTest);
+                _meshDrawer?.SetDepthTestEnabled(_doDepthTest);
                 OnDrawSettingsUpdated?.Invoke();
             }
         }
@@ -114,8 +124,8 @@ namespace Proselyte.DebugDrawer
             OnDrawSettingsUpdated?.Invoke();
         }
 
-        internal static bool GetDoDepthTest() => _doDepthTest;
-        internal static uint GetEnabledLayers() => _enabledLayers;
+        public static bool GetDoDepthTest() => _doDepthTest;
+        public static uint GetEnabledLayers() => _enabledLayers;
         internal static int GetMaxPoolSize() => _maxPoolSize;
         internal static int GetStartingPoolSize() => _startingPoolSize;
 
@@ -130,36 +140,64 @@ namespace Proselyte.DebugDrawer
         /// <param name="duration">How long the line persists.</param>
         /// <param name="layers">Which debug layers to draw on.</param>
         /// <param name="fromFixedUpdate">Set to true when calling from FixedUpdate.</param>
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
         public static void Line(Vector3 start, Vector3 end, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
             {
-                float distance = (end - start).magnitude;
-                Vector3 direction = (end - start).normalized;
-                Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, (end - start).normalized);
+                Vector3 delta = end - start;
+                float distance = delta.magnitude;
+
+                // Skip zero-length lines
+                if(distance < 0.0001f)
+                {
+                    return;
+                }
+
+                Vector3 direction = delta / distance;
+                Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, direction);
                 Matrix4x4 transform = Matrix4x4.TRS(start, rotation, Vector3.one * distance);
                 DebugDraw._meshDrawer.DrawLine(transform, duration, color ?? Color.white, layers, 1, fromFixedUpdate);
             });
         }
 
-        public static void WireQuad(Vector3 position, Quaternion normal, Vector3 scale, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
+        /// <summary>
+        /// Draws a wireframe quad.
+        /// </summary>
+        /// <param name="position">Center position of the quad.</param>
+        /// <param name="normal">Normal vector that the quad should face.</param>
+        /// <param name="scale">Scale of the quad.</param>
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
+        public static void WireQuad(Vector3 position, Vector3 normal, Vector3 scale, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
             {
-                Matrix4x4 transform = Matrix4x4.TRS(position, normal, scale);
+                // Convert normal vector to rotation
+                Quaternion rotation = Quaternion.LookRotation(normal);
+                Matrix4x4 transform = Matrix4x4.TRS(position, rotation, scale);
                 DebugDraw._meshDrawer.DrawWireQuad(transform, duration, color ?? Color.white, layers, 1, fromFixedUpdate);
             });
         }
 
-        public static void Quad(Vector3 position, Quaternion normal, Vector3 scale, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
+        /// <summary>
+        /// Draws a filled quad.
+        /// </summary>
+        /// <param name="position">Center position of the quad.</param>
+        /// <param name="normal">Normal vector that the quad should face.</param>
+        /// <param name="scale">Scale of the quad.</param>
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
+        public static void Quad(Vector3 position, Vector3 normal, Vector3 scale, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
             {
-                Matrix4x4 transform = Matrix4x4.TRS(position, normal, scale);
+                // Convert normal vector to rotation
+                Quaternion rotation = Quaternion.LookRotation(normal);
+                Matrix4x4 transform = Matrix4x4.TRS(position, rotation, scale);
                 DebugDraw._meshDrawer.DrawQuad(transform, duration, color ?? Color.white, layers, 1, 1, fromFixedUpdate);
             });
         }
 
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
         public static void Box(Vector3 position, Quaternion rotation, Vector3 scale, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
@@ -169,6 +207,7 @@ namespace Proselyte.DebugDrawer
             });
         }
 
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
         public static void Box(Matrix4x4 transform, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
@@ -177,6 +216,7 @@ namespace Proselyte.DebugDrawer
             });
         }
 
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
         public static void Sphere(Vector3 position, Quaternion rotation, float radius = 1f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
@@ -186,6 +226,7 @@ namespace Proselyte.DebugDrawer
             });
         }
 
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
         public static void Sphere(Matrix4x4 transform, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
@@ -194,6 +235,7 @@ namespace Proselyte.DebugDrawer
             });
         }
 
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
         public static void WireSphere(Vector3 position, Quaternion rotation, float radius = 1f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
@@ -203,42 +245,97 @@ namespace Proselyte.DebugDrawer
             });
         }
 
-        public static void WireArrow(Vector3 start, Vector3 end, Vector3 up, float arrowLength = 1f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
+        /// <summary>
+        /// Draws a wireframe arrow.
+        /// </summary>
+        /// <param name="start">Start position of the arrow.</param>
+        /// <param name="end">End position of the arrow (arrow points here).</param>
+        /// <param name="up">Up direction for the arrow orientation.</param>
+        /// <param name="arrowHeadSize">Size of the arrowhead.</param>
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
+        public static void WireArrow(Vector3 start, Vector3 end, Vector3 up, float arrowHeadSize = 0.25f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
             {
-                float distance = (end - start).magnitude;
-                Vector3 direction = (end - start).normalized;
+                Vector3 delta = end - start;
+                float distance = delta.magnitude;
+
+                // Early exit if zero length
+                if(distance < 0.0001f)
+                { 
+                    return;
+                }
+
+                Vector3 direction = delta / distance;
                 Quaternion rotation = Quaternion.LookRotation(direction, up);
 
-                Matrix4x4 transform = Matrix4x4.TRS(start, rotation, new Vector3(1, 1, distance));
-                DebugDraw._meshDrawer.DrawWireArrow(transform, duration, color ?? Color.white, layers, arrowLength, fromFixedUpdate);
+                Matrix4x4 transform = Matrix4x4.TRS(start, rotation, new Vector3(arrowHeadSize, arrowHeadSize, distance));
+                DebugDraw._meshDrawer.DrawWireArrow(transform, duration, color ?? Color.white, layers, fromFixedUpdate);
             });
         }
 
-        public static void Arrow(Vector3 start, Vector3 end, Vector3 up, float arrowLength = 1f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
+        /// <summary>
+        /// Draws a filled arrow.
+        /// </summary>
+        /// <param name="start">Start position of the arrow.</param>
+        /// <param name="end">End position of the arrow (arrow points here).</param>
+        /// <param name="up">Up direction for the arrow orientation.</param>
+        /// <param name="arrowHeadSize">Size of the arrowhead.</param>
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
+        public static void Arrow(Vector3 start, Vector3 end, Vector3 up, float arrowHeadSize = 0.25f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
             {
+                Vector3 delta = end - start;
+                float distance = delta.magnitude;
+
+                // Early exit if zero length
+                if(distance < 0.0001f)
+                {
+                    Debug.LogWarning("DebugDraw.Arrow: start and end positions are too close");
+                    return;
+                }
+
+                Vector3 direction = delta / distance;
+                Quaternion rotation = Quaternion.LookRotation(direction, up);
+
+                // Draw the line portion
                 DebugDraw.Line(start, end, color, duration, layers, fromFixedUpdate);
-                float distance = (end - start).magnitude;
-                Vector3 direction = (end - start).normalized;
-                Quaternion rotation = Quaternion.LookRotation(direction, up);
 
-                Matrix4x4 transform = Matrix4x4.TRS(start, rotation, new Vector3(1, 1, distance));
-                DebugDraw._meshDrawer.DrawArrow(transform, duration, color ?? Color.white, layers, arrowLength, fromFixedUpdate);
+                // Draw the arrowhead
+                Matrix4x4 transform = Matrix4x4.TRS(start, rotation, new Vector3(arrowHeadSize, arrowHeadSize, distance));
+                DebugDraw._meshDrawer.DrawArrow(transform, duration, color ?? Color.white, layers, fromFixedUpdate);
             });
         }
 
+        /// <summary>
+        /// Draws a wireframe capsule between two points.
+        /// </summary>
+        /// <param name="point1">First endpoint of the capsule.</param>
+        /// <param name="point2">Second endpoint of the capsule.</param>
+        /// <param name="radius">Radius of the capsule.</param>
+        [System.Diagnostics.Conditional("DEBUG_DRAW")]
         public static void WireCapsule(Vector3 point1, Vector3 point2, float radius = 1f, Color? color = null, float duration = 0f, uint layers = (uint)DebugLayers.Layer1, bool fromFixedUpdate = false)
         {
             InvokeWithInit(() =>
             {
-                float height = Vector3.Distance(point1, point2) + radius * 2;
-                Vector3 centre = point1 + (point2 - point1) * 0.5f;
-                Quaternion rotation = Quaternion.FromToRotation(Vector3.up, point2 - point1);
+                Vector3 delta = point2 - point1;
+                float cylinderHeight = delta.magnitude;
+
+                // Handle degenerate case
+                if(cylinderHeight < 0.0001f)
+                {
+                    // Just draw a sphere if points are the same
+                    WireSphere(point1, Quaternion.identity, radius, color, duration, layers, fromFixedUpdate);
+                    return;
+                }
+
+                float totalHeight = cylinderHeight + radius * 2f;
+                Vector3 centre = point1 + delta * 0.5f;
+                Quaternion rotation = Quaternion.FromToRotation(Vector3.up, delta / cylinderHeight);
+
                 Matrix4x4 transform = Matrix4x4.TRS(centre, rotation, Vector3.one);
-                DebugDraw._meshDrawer.DrawWireCapsule(transform, duration, color ?? Color.white, layers, height, radius, 1, fromFixedUpdate);
+                DebugDraw._meshDrawer.DrawWireCapsule(transform, duration, color ?? Color.white, layers, totalHeight, radius, fromFixedUpdate);
             });
         }
 

@@ -22,8 +22,10 @@ internal class DebugMeshDrawer
     private readonly DebugMeshCollection _wireSphereCollection;
     private readonly DebugMeshCollection _wireArrowCollection;
     private readonly DebugMeshCollection _arrowCollection;
-    private readonly DebugMeshCollection _wireCapsuleCollection;
-    // Add other collections as needed
+
+    // Capsule components (drawn as separate parts)
+    private readonly DebugMeshCollection _capsuleDomeCollection;
+    private readonly DebugMeshCollection _capsuleCylinderCollection;
 
     internal DebugMeshDrawer(DebugDraw parent)
     {
@@ -34,7 +36,7 @@ internal class DebugMeshDrawer
         // Create materials
         Material wireframeMaterial = CreateDefaultMaterial();
 
-        // Create meshes
+        // Create meshes (single standard mesh per shape type)
         Mesh lineMesh = DebugMeshes.Construct(DebugShape.Line);
         Mesh wireQuadMesh = DebugMeshes.Construct(DebugShape.WireQuad);
         Mesh quadMesh = DebugMeshes.Construct(DebugShape.Quad);
@@ -43,8 +45,8 @@ internal class DebugMeshDrawer
         Mesh wireSphereMesh = DebugMeshes.Construct(DebugShape.WireSphere);
         Mesh wireArrowMesh = DebugMeshes.Construct(DebugShape.WireArrow);
         Mesh arrowMesh = DebugMeshes.Construct(DebugShape.Arrow);
-        Mesh wireCapsuleMesh = DebugMeshes.Construct(DebugShape.WireCapsule);
-        // Create other meshes as needed
+        Mesh capsuleDomeMesh = DebugMeshes.Construct(DebugShape.CapsuleDome);
+        Mesh capsuleCylinderMesh = DebugMeshes.Construct(DebugShape.CapsuleCylinder);
 
         // Create collections
         _lineCollection = new DebugMeshCollection(lineMesh, wireframeMaterial);
@@ -53,10 +55,10 @@ internal class DebugMeshDrawer
         _boxCollection = new DebugMeshCollection(boxMesh, wireframeMaterial);
         _sphereCollection = new DebugMeshCollection(sphereMesh, wireframeMaterial);
         _wireSphereCollection = new DebugMeshCollection(wireSphereMesh, wireframeMaterial);
-        _wireArrowCollection = new DebugMeshCollection(arrowMesh, wireframeMaterial);
+        _wireArrowCollection = new DebugMeshCollection(wireArrowMesh, wireframeMaterial);
         _arrowCollection = new DebugMeshCollection(arrowMesh, wireframeMaterial);
-        _wireCapsuleCollection = new DebugMeshCollection(wireCapsuleMesh, wireframeMaterial);
-        // Add other collections as needed
+        _capsuleDomeCollection = new DebugMeshCollection(capsuleDomeMesh, wireframeMaterial);
+        _capsuleCylinderCollection = new DebugMeshCollection(capsuleCylinderMesh, wireframeMaterial);
 
         _collections.Add(_lineCollection);
         _collections.Add(_wireQuadCollection);
@@ -66,10 +68,28 @@ internal class DebugMeshDrawer
         _collections.Add(_wireSphereCollection);
         _collections.Add(_wireArrowCollection);
         _collections.Add(_arrowCollection);
-        _collections.Add(_wireCapsuleCollection);
-        // Add other collections as needed
+        _collections.Add(_capsuleDomeCollection);
+        _collections.Add(_capsuleCylinderCollection);
 
         DebugMeshCollection.OnInstanceRemoved += inst => MeshPool.Return(inst);
+    }
+
+    internal void Cleanup()
+    {
+        // Unsubscribe from events
+        DebugMeshCollection.OnInstanceRemoved -= inst => MeshPool.Return(inst);
+
+        // Destroy all meshes to prevent memory leaks
+        foreach(var collection in _collections)
+        {
+            if(collection != null && collection.Mesh != null)
+            {
+                Object.Destroy(collection.Mesh);
+            }
+        }
+
+        // Clear collections
+        _collections.Clear();
     }
 
     private Material CreateDefaultMaterial()
@@ -143,16 +163,18 @@ internal class DebugMeshDrawer
 
     internal void DrawWireQuad(Matrix4x4 transform, float duration, Color color, uint layers, float lineLength, bool fromFixedUpdate)
     {
-        if((DebugDraw.GetEnabledLayers() | layers) == 0)
+        // FIXED: Changed | to & for proper layer filtering
+        if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
         var instance = GetAMeshInstance(transform, duration, color, layers, lineLength, 1, 1, fromFixedUpdate);
         _wireQuadCollection.Add(instance);
     }
-    
+
     internal void DrawQuad(Matrix4x4 transform, float duration, Color color, uint layers, float length, float height, bool fromFixedUpdate)
     {
-        if((DebugDraw.GetEnabledLayers() | layers) == 0)
+        // FIXED: Changed | to & for proper layer filtering
+        if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
         var instance = GetAMeshInstance(transform, duration, color, layers, length, height, 1, fromFixedUpdate);
@@ -186,64 +208,59 @@ internal class DebugMeshDrawer
         _wireSphereCollection.Add(instance);
     }
 
-    internal void DrawWireArrow(Matrix4x4 transform, float duration, Color color, uint layers, float arrowLength, bool fromFixedUpdate)
+    internal void DrawWireArrow(Matrix4x4 transform, float duration, Color color, uint layers, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
-        // Create a unique arrow mesh for the given arrowLength
-        Mesh customArrowMesh = DebugMeshes.Construct(DebugShape.WireArrow, arrowLength);
-
-        // Create a new collection for this custom arrow mesh if it doesn't exist
-        DebugMeshCollection customArrowCollection = new DebugMeshCollection(customArrowMesh, _wireArrowCollection.Material);
-
-        // Create a mesh instance and add it to the custom collection
-        var instance = GetAMeshInstance(transform, duration, color, layers, arrowLength, 1, 1, fromFixedUpdate);
-        customArrowCollection.Add(instance);
-
-        // Temporarily store the custom collection in a list to update it in the Update method
-        _collections.Add(customArrowCollection);
+        // FIXED: Use standard mesh with transform scale instead of generating new meshes
+        // The arrow size is controlled by the transform's scale (passed from DebugDraw.WireArrow)
+        var instance = GetAMeshInstance(transform, duration, color, layers, 1, 1, 1, fromFixedUpdate);
+        _wireArrowCollection.Add(instance);
     }
 
-    internal void DrawArrow(Matrix4x4 transform, float duration, Color color, uint layers, float arrowLength, bool fromFixedUpdate)
+    internal void DrawArrow(Matrix4x4 transform, float duration, Color color, uint layers, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
-        // Create a unique arrow mesh for the given arrowLength
-        Mesh customArrowMesh = DebugMeshes.Construct(DebugShape.Arrow, arrowLength);
-
-        // Create a new collection for this custom arrow mesh if it doesn't exist
-        DebugMeshCollection customArrowCollection = new DebugMeshCollection(customArrowMesh, _arrowCollection.Material);
-
-        // Create a mesh instance and add it to the custom collection
-        var instance = GetAMeshInstance(transform, duration, color, layers, arrowLength, 1, 1, fromFixedUpdate);
-        customArrowCollection.Add(instance);
-
-        // Temporarily store the custom collection in a list to update it in the Update method
-        _collections.Add(customArrowCollection);
+        // FIXED: Use standard mesh with transform scale instead of generating new meshes
+        var instance = GetAMeshInstance(transform, duration, color, layers, 1, 1, 1, fromFixedUpdate);
+        _arrowCollection.Add(instance);
     }
 
-    internal void DrawWireCapsule(Matrix4x4 transform, float duration, Color color, uint layers, float length, float height, float radius, bool fromFixedUpdate = false)
+    internal void DrawWireCapsule(Matrix4x4 transform, float duration, Color color, uint layers, float height, float radius, bool fromFixedUpdate)
     {
         if((DebugDraw.GetEnabledLayers() & layers) == 0)
             return;
 
-        // Create a unique arrow mesh for the given arrowLength
-        Mesh customArrowMesh = DebugMeshes.Construct(DebugShape.WireCapsule, 1, height, radius);
+        // FIXED: Draw capsule as 3 separate parts - bottom dome, cylinder, top dome
+        // This allows proper scaling without distorting the dome spheres
 
-        // Create a new collection for this custom arrow mesh if it doesn't exist
-        DebugMeshCollection customArrowCollection = new DebugMeshCollection(customArrowMesh, _arrowCollection.Material);
+        // Extract position and rotation from the transform
+        Vector3 position = transform.GetColumn(3);
+        Quaternion rotation = Quaternion.LookRotation(transform.GetColumn(2), transform.GetColumn(1));
 
-        // Create a mesh instance and add it to the custom collection
-        var instance = GetAMeshInstance(transform, duration, color, layers, length, height, radius, fromFixedUpdate);
-        customArrowCollection.Add(instance);
+        // Calculate cylinder height (total height minus the two dome caps)
+        float cylinderHeight = height - (radius * 2f);
 
-        // Temporarily store the custom collection in a list to update it in the Update method
-        _collections.Add(customArrowCollection);
+        // Bottom dome at origin, scaled by radius
+        Vector3 bottomDomePos = position - (rotation * Vector3.up * (cylinderHeight * 0.5f));
+        Matrix4x4 bottomDomeTransform = Matrix4x4.TRS(bottomDomePos, rotation * Quaternion.Euler(180, 0, 0), Vector3.one * radius * 2f);
+        var bottomDomeInstance = GetAMeshInstance(bottomDomeTransform, duration, color, layers, 1, 1, radius, fromFixedUpdate);
+        _capsuleDomeCollection.Add(bottomDomeInstance);
+
+        // Cylinder body - scale XZ by radius, Y by cylinder height
+        Matrix4x4 cylinderTransform = Matrix4x4.TRS(position, rotation, new Vector3(radius * 2f, cylinderHeight, radius * 2f));
+        var cylinderInstance = GetAMeshInstance(cylinderTransform, duration, color, layers, 1, cylinderHeight, radius, fromFixedUpdate);
+        _capsuleCylinderCollection.Add(cylinderInstance);
+
+        // Top dome at end, scaled by radius
+        Vector3 topDomePos = position + (rotation * Vector3.up * (cylinderHeight * 0.5f));
+        Matrix4x4 topDomeTransform = Matrix4x4.TRS(topDomePos, rotation, Vector3.one * radius * 2f);
+        var topDomeInstance = GetAMeshInstance(topDomeTransform, duration, color, layers, 1, 1, radius, fromFixedUpdate);
+        _capsuleDomeCollection.Add(topDomeInstance);
     }
-
-    // Implement other shapes similarly
 
     #endregion
 

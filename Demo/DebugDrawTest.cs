@@ -7,6 +7,7 @@ public class DebugDrawTest : MonoBehaviour
     public bool drawSphere = true;
     public bool drawWireSphere = true;
     public bool drawArrow = true;
+    public bool drawCapsule = true;
     public bool toggleDepthTest = false;
 
     public Vector3 boxPosition = Vector3.zero;
@@ -20,7 +21,10 @@ public class DebugDrawTest : MonoBehaviour
 
     public Vector3 arrowStartPosition;
     public Vector3 arrowEndPosition;
-    public float arrowLength;
+
+    public Vector3 capsuleStartPosition;
+    public Vector3 capsuleEndPosition;
+    public float capsuleRadius;
 
     public float duration = 0f;
     public DebugLayers debugLayer = DebugLayers.Layer1;
@@ -68,7 +72,22 @@ public class DebugDrawTest : MonoBehaviour
         // Draw a wire arrow
         if(drawArrow)
         {
-            DebugDraw.WireArrow(arrowStartPosition, arrowEndPosition, Vector3.up, arrowLength, Color.red);
+            DebugDraw.WireArrow(arrowStartPosition, arrowEndPosition, Vector3.up, color: Color.red);
+        }
+
+        // Draw a wire capsule
+        if(drawArrow)
+        {
+            DebugDraw.WireCapsule(point1: capsuleStartPosition, point2: capsuleEndPosition, radius: capsuleRadius, color: Color.red);
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        // Draw a wire capsule
+        if(drawCapsule)
+        {
+            DebugDraw.WireCapsule(point1: capsuleStartPosition + Vector3.right, point2: capsuleEndPosition + Vector3.right, radius: capsuleRadius, color: Color.blue, fromFixedUpdate: true);
         }
     }
 
